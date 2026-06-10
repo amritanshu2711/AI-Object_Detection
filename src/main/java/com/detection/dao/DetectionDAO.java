@@ -236,21 +236,13 @@ public class DetectionDAO {
 
     public Map<String, Integer> getDailyStats() {
         Map<String, Integer> stats = new HashMap<>();
-        try (Connection conn = DBConnection.getConnection()) {
-            boolean isSQLite = conn.getMetaData().getDatabaseProductName().equalsIgnoreCase("SQLite");
-            String query;
-            if (isSQLite) {
-                query = "SELECT strftime('%Y-%m-%d', created_at) AS date_val, COUNT(*) AS count " +
-                        "FROM detections GROUP BY date_val ORDER BY date_val DESC LIMIT 7";
-            } else {
-                query = "SELECT DATE_FORMAT(created_at, '%Y-%m-%d') AS date_val, COUNT(*) AS count " +
-                        "FROM detections GROUP BY date_val ORDER BY date_val DESC LIMIT 7";
-            }
-            try (PreparedStatement ps = conn.prepareStatement(query);
-                 ResultSet rs = ps.executeQuery()) {
-                while (rs.next()) {
-                    stats.put(rs.getString("date_val"), rs.getInt("count"));
-                }
+        String query = "SELECT DATE_FORMAT(created_at, '%Y-%m-%d') AS date_val, COUNT(*) AS count " +
+                       "FROM detections GROUP BY date_val ORDER BY date_val DESC LIMIT 7";
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(query);
+             ResultSet rs = ps.executeQuery()) {
+            while (rs.next()) {
+                stats.put(rs.getString("date_val"), rs.getInt("count"));
             }
         } catch (SQLException e) {
             e.printStackTrace();
@@ -260,21 +252,13 @@ public class DetectionDAO {
 
     public Map<String, Integer> getMonthlyStats() {
         Map<String, Integer> stats = new HashMap<>();
-        try (Connection conn = DBConnection.getConnection()) {
-            boolean isSQLite = conn.getMetaData().getDatabaseProductName().equalsIgnoreCase("SQLite");
-            String query;
-            if (isSQLite) {
-                query = "SELECT strftime('%Y-%m', created_at) AS month_val, COUNT(*) AS count " +
-                        "FROM detections GROUP BY month_val ORDER BY month_val DESC LIMIT 6";
-            } else {
-                query = "SELECT DATE_FORMAT(created_at, '%Y-%m') AS month_val, COUNT(*) AS count " +
-                        "FROM detections GROUP BY month_val ORDER BY month_val DESC LIMIT 6";
-            }
-            try (PreparedStatement ps = conn.prepareStatement(query);
-                 ResultSet rs = ps.executeQuery()) {
-                while (rs.next()) {
-                    stats.put(rs.getString("month_val"), rs.getInt("count"));
-                }
+        String query = "SELECT DATE_FORMAT(created_at, '%Y-%m') AS month_val, COUNT(*) AS count " +
+                       "FROM detections GROUP BY month_val ORDER BY month_val DESC LIMIT 6";
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(query);
+             ResultSet rs = ps.executeQuery()) {
+            while (rs.next()) {
+                stats.put(rs.getString("month_val"), rs.getInt("count"));
             }
         } catch (SQLException e) {
             e.printStackTrace();

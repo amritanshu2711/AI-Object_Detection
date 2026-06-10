@@ -454,12 +454,7 @@ public class DetectionServlet extends HttpServlet {
                 System.out.println("[AI Vision Engine] Running actual OpenCV DNN detection for ID: " + detectionId + ", File: " + filePath);
                 String scriptPath = getServletContext().getRealPath("/") + "detect.py";
                 try {
-                    String pythonCmd = System.getenv("PYTHON_CMD");
-                    if (pythonCmd == null || pythonCmd.trim().isEmpty()) {
-                        pythonCmd = "python";
-                    }
-                    ProcessBuilder pb = new ProcessBuilder(pythonCmd, scriptPath, filePath, String.valueOf(threshold));
-                    pb.directory(new File(getServletContext().getRealPath("/")));
+                    ProcessBuilder pb = new ProcessBuilder("python", scriptPath, filePath, String.valueOf(threshold));
                     pb.redirectErrorStream(true);
                     Process process = pb.start();
                     
