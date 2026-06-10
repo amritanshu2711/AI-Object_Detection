@@ -1,0 +1,32 @@
+# Compiled Java class files
+src/main/webapp/WEB-INF/classes/
+*.class
+
+# Eclipse IDE configuration files
+.settings/
+.project
+.classpath
+
+# VS Code IDE files
+.vscode/
+
+# Build folder
+build/
+
+# Local media uploads (prevent bloating the repo)
+src/main/webapp/uploads/
+
+# Large AI model files (downloaded by setup scripts)
+ai_model/*.caffemodel
+ai_model/*.prototxt
+ai_model/*.onnx
+
+# Python cache / virtual environments
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.venv/
+venv/
+env/
+.env
