@@ -53,11 +53,11 @@ RUN python download_model_v2.py && python download_resnet.py
 # Create directory for uploads and grant permissions
 RUN mkdir -p uploads && chmod 777 uploads
 
-# Default environment variables (can be overridden at runtime)
+# Default environment variables (defaults to empty so it immediately utilizes SQLite)
 ENV PYTHON_CMD=/opt/venv/bin/python
-ENV DB_URL=jdbc:mysql://db:3306/ai_detection_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
-ENV DB_USER=root
-ENV DB_PASSWORD=Root
+ENV DB_URL=""
+ENV DB_USER=""
+ENV DB_PASSWORD=""
 
 EXPOSE 8080
 

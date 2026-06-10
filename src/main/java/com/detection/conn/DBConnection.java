@@ -16,7 +16,13 @@ public class DBConnection {
             Class.forName("com.mysql.cj.jdbc.Driver");
         } catch (ClassNotFoundException e) {
             System.err.println("MySQL Connector/J Driver not found in classpath!");
-            e.printStackTrace();
+        }
+        try {
+            // Load SQLite Driver
+            Class.forName("org.sqlite.JDBC");
+            System.out.println("SQLite JDBC Driver loaded successfully.");
+        } catch (ClassNotFoundException e) {
+            System.err.println("SQLite JDBC Driver not found in classpath!");
         }
     }
 

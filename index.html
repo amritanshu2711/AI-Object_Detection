@@ -3,11 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Powered Object Detection System - Deployment Guide</title>
+    <title>AI Powered Object Detection System</title>
     <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Plus+Jakarta+Sans:wght@300;400;600;700&display=swap" rel="stylesheet">
     <!-- Bootstrap Icons -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+    <!-- TensorFlow.js and COCO-SSD models -->
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd"></script>
+    
     <style>
         :root {
             --bg-color: #0b0f19;
@@ -38,18 +42,18 @@
             background-attachment: fixed;
             min-height: 100vh;
             display: flex;
-            flex-column: column;
-            justify-content: space-between;
+            flex-direction: column;
         }
 
         header {
-            max-width: 1100px;
+            max-width: 1200px;
             margin: 0 auto;
             width: 100%;
-            padding: 2.5rem 1.5rem;
+            padding: 1.5rem;
             display: flex;
             justify-content: space-between;
             align-items: center;
+            border-bottom: 1px solid var(--card-border);
         }
 
         .logo {
@@ -87,8 +91,8 @@
         }
 
         main {
-            max-width: 1100px;
-            margin: 0 auto 3rem auto;
+            max-width: 1200px;
+            margin: 2rem auto;
             width: 100%;
             padding: 0 1.5rem;
             flex-grow: 1;
@@ -96,16 +100,15 @@
 
         .hero {
             text-align: center;
-            margin-bottom: 3.5rem;
-            padding-top: 1rem;
+            margin-bottom: 2.5rem;
         }
 
         h1 {
             font-family: 'Outfit', sans-serif;
-            font-size: 3rem;
+            font-size: 2.8rem;
             font-weight: 800;
             line-height: 1.2;
-            margin-bottom: 1.2rem;
+            margin-bottom: 0.5rem;
             letter-spacing: -0.02em;
         }
 
@@ -116,137 +119,290 @@
         }
 
         .lead {
-            font-size: 1.15rem;
+            font-size: 1.1rem;
             color: var(--text-muted);
-            max-width: 750px;
-            margin: 0 auto 2rem auto;
+            max-width: 800px;
+            margin: 0 auto;
         }
 
-        .notice-banner {
-            background: rgba(239, 68, 68, 0.08);
-            border: 1px dashed rgba(239, 68, 68, 0.3);
+        /* Model Loading Overlay */
+        #modelLoading {
+            background: rgba(79, 70, 229, 0.1);
+            border: 1px solid rgba(79, 70, 229, 0.3);
             border-radius: 12px;
-            padding: 1.2rem 1.5rem;
+            padding: 1rem;
+            max-width: 600px;
+            margin: 1.5rem auto;
             display: flex;
-            align-items: flex-start;
+            align-items: center;
+            justify-content: center;
             gap: 1rem;
-            max-width: 850px;
-            margin: 0 auto 3rem auto;
-            text-align: left;
+            font-weight: 600;
         }
 
-        .notice-banner i {
-            color: #ef4444;
-            font-size: 1.4rem;
-            margin-top: 0.1rem;
+        .spinner {
+            width: 24px;
+            height: 24px;
+            border: 3px solid rgba(255, 255, 255, 0.1);
+            border-top: 3px solid #818cf8;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
         }
 
-        .notice-title {
-            font-weight: 700;
-            color: #fca5a5;
-            margin-bottom: 0.2rem;
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
         }
 
-        .notice-desc {
-            font-size: 0.95rem;
-            color: #fecaca;
-        }
-
-        .grid {
+        /* Interactive Panel */
+        .workspace-grid {
             display: grid;
-            grid-template-columns: 1fr 1fr;
+            grid-template-columns: 2fr 1fr;
             gap: 2rem;
             margin-bottom: 3rem;
         }
 
-        @media (max-width: 768px) {
-            .grid {
+        @media (max-width: 992px) {
+            .workspace-grid {
                 grid-template-columns: 1fr;
-            }
-            h1 {
-                font-size: 2.2rem;
             }
         }
 
-        .card {
+        .panel-card {
             background: var(--card-bg);
             border: 1px solid var(--card-border);
             border-radius: 16px;
-            padding: 2.2rem;
+            padding: 1.8rem;
             backdrop-filter: blur(10px);
-            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.2);
-            transition: all 0.3s ease;
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
         }
 
-        .card:hover {
-            border-color: rgba(99, 102, 241, 0.4);
-            transform: translateY(-4px);
-        }
-
-        .card-header {
+        .panel-title {
+            font-family: 'Outfit', sans-serif;
+            font-size: 1.3rem;
+            font-weight: 600;
+            margin-bottom: 1.2rem;
             display: flex;
             align-items: center;
-            gap: 1rem;
+            gap: 0.5rem;
+        }
+
+        /* Uploader styling */
+        .upload-area {
+            border: 2px dashed var(--card-border);
+            border-radius: 12px;
+            padding: 2.5rem 1.5rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: rgba(0, 0, 0, 0.15);
             margin-bottom: 1.5rem;
         }
 
-        .icon-wrapper {
-            width: 50px;
-            height: 50px;
-            border-radius: 12px;
-            background: rgba(79, 70, 229, 0.15);
+        .upload-area:hover {
+            border-color: #6366f1;
+            background: rgba(99, 102, 241, 0.05);
+        }
+
+        .upload-area i {
+            font-size: 3rem;
             color: #818cf8;
+            margin-bottom: 1rem;
+            display: block;
+        }
+
+        .upload-area input {
+            display: none;
+        }
+
+        /* Presets selection */
+        .preset-container {
+            display: flex;
+            gap: 0.8rem;
+            flex-wrap: wrap;
+            margin-bottom: 1.5rem;
+            align-items: center;
+        }
+
+        .preset-btn {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--card-border);
+            color: var(--text-main);
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.85rem;
+            transition: all 0.2s ease;
+        }
+
+        .preset-btn:hover, .preset-btn.active {
+            background: var(--primary);
+            border-color: var(--primary);
+            transform: translateY(-1px);
+        }
+
+        /* Image viewport and Canvas mapping */
+        .viewport-wrapper {
+            position: relative;
+            background: #05070c;
+            border-radius: 12px;
+            overflow: hidden;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 1.5rem;
+            min-height: 300px;
+            max-height: 500px;
+            border: 1px solid var(--card-border);
         }
 
-        .card-header.accent .icon-wrapper {
+        .viewport-image {
+            max-width: 100%;
+            max-height: 500px;
+            display: block;
+        }
+
+        .viewport-canvas {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+
+        /* Results table */
+        .results-list {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 0.8rem;
+        }
+
+        .result-item {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid var(--card-border);
+            border-radius: 8px;
+            padding: 0.8rem 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .result-label {
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .result-score {
+            font-family: monospace;
             background: rgba(6, 182, 212, 0.15);
             color: #22d3ee;
+            padding: 0.2rem 0.6rem;
+            border-radius: 50px;
+            font-weight: bold;
+            font-size: 0.85rem;
         }
 
-        .card-title {
+        /* Collapsible instructions wrapper */
+        .deployment-section {
+            margin-top: 2rem;
+            border-top: 1px solid var(--card-border);
+            padding-top: 2rem;
+        }
+
+        .toggle-header {
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem;
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid var(--card-border);
+            border-radius: 10px;
             font-family: 'Outfit', sans-serif;
-            font-size: 1.4rem;
+            font-size: 1.15rem;
             font-weight: 600;
+            transition: background 0.3s;
+        }
+
+        .toggle-header:hover {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .toggle-content {
+            display: none;
+            margin-top: 1.5rem;
+            animation: fadeIn 0.4s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .guide-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+        }
+
+        @media (max-width: 768px) {
+            .guide-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .guide-card {
+            background: rgba(255, 255, 255, 0.01);
+            border: 1px solid var(--card-border);
+            border-radius: 12px;
+            padding: 1.5rem;
+        }
+
+        .guide-title {
+            font-family: 'Outfit', sans-serif;
+            font-size: 1.15rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: #818cf8;
         }
 
         .steps {
             list-style: none;
             display: flex;
             flex-direction: column;
-            gap: 1.2rem;
+            gap: 1rem;
+            font-size: 0.9rem;
         }
 
         .step-item {
             position: relative;
-            padding-left: 2rem;
+            padding-left: 1.8rem;
         }
 
         .step-number {
             position: absolute;
             left: 0;
-            top: 0.1rem;
-            width: 1.35rem;
-            height: 1.35rem;
+            top: 0.05rem;
+            width: 1.2rem;
+            height: 1.2rem;
             border-radius: 50%;
             background: #4f46e5;
             color: white;
-            font-size: 0.8rem;
+            font-size: 0.75rem;
             font-weight: bold;
             display: flex;
             align-items: center;
             justify-content: center;
         }
 
-        .card-header.accent + .steps .step-number {
-            background: #06b6d4;
-        }
-
         .step-text {
-            font-size: 0.95rem;
             color: var(--text-muted);
         }
 
@@ -256,22 +412,22 @@
 
         code {
             background: rgba(255, 255, 255, 0.08);
-            padding: 0.15rem 0.4rem;
+            padding: 0.1rem 0.3rem;
             border-radius: 4px;
             font-family: monospace;
-            font-size: 0.85rem;
+            font-size: 0.8rem;
             color: #e0f2fe;
         }
 
         .code-block {
             background: rgba(0, 0, 0, 0.3);
             border: 1px solid rgba(255, 255, 255, 0.05);
-            padding: 0.75rem;
-            border-radius: 8px;
+            padding: 0.5rem 0.75rem;
+            border-radius: 6px;
             font-family: monospace;
-            font-size: 0.85rem;
+            font-size: 0.8rem;
             color: #38bdf8;
-            margin-top: 0.5rem;
+            margin-top: 0.4rem;
             word-break: break-all;
         }
 
@@ -281,40 +437,16 @@
             color: var(--text-muted);
             font-size: 0.85rem;
             border-top: 1px solid var(--card-border);
-            max-width: 1100px;
-            margin: 0 auto;
+            max-width: 1200px;
+            margin: 2rem auto 0 auto;
             width: 100%;
-        }
-
-        .action-links {
-            display: flex;
-            justify-content: center;
-            gap: 1.5rem;
-            margin-top: 1.5rem;
-        }
-
-        .btn {
-            background: var(--primary);
-            color: white;
-            padding: 0.8rem 1.8rem;
-            border-radius: 8px;
-            text-decoration: none;
-            font-weight: 600;
-            transition: background 0.3s;
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-
-        .btn:hover {
-            background: var(--primary-hover);
         }
     </style>
 </head>
 <body>
     <header>
         <a href="#" class="logo">
-            <i class="bi bi-cpu-fill"></i> VisionAI
+            <i class="bi bi-cpu-fill"></i> VisionAI Pages
         </a>
         <a href="https://github.com/amritanshu2711/AI-Object_Detection" class="github-btn" target="_blank">
             <i class="bi bi-github"></i> Repository Code
@@ -324,101 +456,138 @@
     <main>
         <div class="hero">
             <h1>AI Powered <span class="gradient-text">Object Detection</span> System</h1>
-            <p class="lead">A Dynamic J2EE Java Servlet & Python OpenCV Neural Network Web Application</p>
+            <p class="lead">Serving active client-side deep neural network inferences directly in your browser.</p>
             
-            <div class="notice-banner">
-                <i class="bi bi-exclamation-triangle-fill"></i>
-                <div>
-                    <div class="notice-title">GitHub Pages Notice</div>
-                    <div class="notice-desc">
-                        You are seeing this page because this repository is deployed on <strong>GitHub Pages</strong>, which only supports <strong>static file hosting</strong>. Because this application requires a Java (Tomcat) application server, a MySQL database, and Python AI weights to execute, the active detector cannot run directly on this static hosting site.
-                    </div>
-                </div>
-            </div>
-
-            <div class="action-links">
-                <a href="https://github.com/amritanshu2711/AI-Object_Detection#quick-deployment-docker-compose" class="btn" target="_blank">
-                    <i class="bi bi-rocket-takeoff-fill"></i> View Deployment Guide
-                </a>
+            <div id="modelLoading">
+                <div class="spinner"></div>
+                <span>Downloading Object Detection Model (approx. 20MB)...</span>
             </div>
         </div>
 
-        <div class="grid">
-            <!-- Render deployment card -->
-            <div class="card">
-                <div class="card-header">
-                    <div class="icon-wrapper">
-                        <i class="bi bi-cloud-check-fill"></i>
-                    </div>
-                    <h2 class="card-title">Option A: Deploy to Render (Cloud)</h2>
+        <div class="workspace-grid">
+            <!-- Left panel: image viewer -->
+            <div class="panel-card">
+                <div class="panel-title">
+                    <i class="bi bi-image"></i> Interactive Detection Console
                 </div>
-                <ul class="steps">
-                    <li class="step-item">
-                        <span class="step-number">1</span>
-                        <div class="step-text">Create a free MySQL Database on database cloud providers like <strong>Aiven.io</strong> or <strong>Clever Cloud</strong>. Copy your connection URL, username, and password.</div>
-                    </li>
-                    <li class="step-item">
-                        <span class="step-number">2</span>
-                        <div class="step-text">Sign up at <strong>Render.com</strong>, create a new <strong>Web Service</strong>, and link your GitHub repository <code>amritanshu2711/AI-Object_Detection</code>.</div>
-                    </li>
-                    <li class="step-item">
-                        <span class="step-number">3</span>
-                        <div class="step-text">Select <strong>Docker</strong> as the Runtime environment (Render will read our preconfigured <code>Dockerfile</code> automatically).</div>
-                    </li>
-                    <li class="step-item">
-                        <span class="step-number">4</span>
-                        <div class="step-text">In the Render service environment settings, add these variables:
-                            <div class="code-block">
-                                DB_URL = [Your MySQL JDBC URL]<br>
-                                DB_USER = [Your Username]<br>
-                                DB_PASSWORD = [Your Password]<br>
-                                PYTHON_CMD = /opt/venv/bin/python
-                            </div>
-                        </div>
-                    </li>
-                    <li class="step-item">
-                        <span class="step-number">5</span>
-                        <div class="step-text">Click <strong>Deploy Web Service</strong>. Render will build and host your J2EE backend with Python OpenCV!</div>
-                    </li>
-                </ul>
+                
+                <div class="preset-container">
+                    <span style="font-size: 0.9rem; color: var(--text-muted);">Sample Presets:</span>
+                    <button class="preset-btn active" onclick="loadPreset('traffic')">Traffic</button>
+                    <button class="preset-btn" onclick="loadPreset('workspace')">Workspace</button>
+                    <button class="preset-btn" onclick="loadPreset('animal')">Animal</button>
+                    <button class="preset-btn" onclick="loadPreset('living')">Living Space</button>
+                </div>
+
+                <div class="upload-area" onclick="document.getElementById('fileInput').click()">
+                    <i class="bi bi-cloud-arrow-up-fill"></i>
+                    <span>Drag & drop or <strong>click to upload your own image</strong></span>
+                    <input type="file" id="fileInput" accept="image/*" onchange="handleImageUpload(event)">
+                </div>
+
+                <div class="viewport-wrapper">
+                    <img id="imageElement" src="src/main/webapp/assets/images/dataset/traffic.png" alt="Viewport Image" class="viewport-image" crossorigin="anonymous" onload="runModel()">
+                    <canvas id="canvasElement" class="viewport-canvas"></canvas>
+                </div>
             </div>
 
-            <!-- Local deployment card -->
-            <div class="card">
-                <div class="card-header accent">
-                    <div class="icon-wrapper">
-                        <i class="bi bi-laptop"></i>
+            <!-- Right panel: statistics & predictions list -->
+            <div class="panel-card" style="display: flex; flex-direction: column; justify-content: space-between;">
+                <div>
+                    <div class="panel-title">
+                        <i class="bi bi-bar-chart-fill"></i> Predictions Output
                     </div>
-                    <h2 class="card-title">Option B: Run Locally (Recommended)</h2>
+                    <div id="resultsPlaceholder" style="color: var(--text-muted); font-size: 0.95rem; text-align: center; margin-top: 3rem;">
+                        <i class="bi bi-arrow-left" style="font-size: 1.5rem; display: block; margin-bottom: 0.5rem;"></i>
+                        Select an image or upload one to execute AI detection model.
+                    </div>
+                    <ul class="results-list" id="resultsList" style="display: none;">
+                        <!-- Populate dynamically -->
+                    </ul>
                 </div>
-                <ul class="steps">
-                    <li class="step-item">
-                        <span class="step-number">1</span>
-                        <div class="step-text">Install <strong>Docker Desktop</strong> on your local computer.</div>
-                    </li>
-                    <li class="step-item">
-                        <span class="step-number">2</span>
-                        <div class="step-text">Clone your repository to your local drive:
-                            <div class="code-block">git clone https://github.com/amritanshu2711/AI-Object_Detection.git</div>
+                
+                <div style="background: rgba(255,255,255,0.02); padding: 1rem; border-radius: 8px; border: 1px solid var(--card-border); margin-top: 1.5rem;">
+                    <div style="font-size: 0.8rem; font-weight: bold; color: var(--accent); margin-bottom: 0.2rem;">ENGINE STATS:</div>
+                    <div style="font-size: 0.75rem; color: var(--text-muted);">
+                        Pipeline: <strong>TensorFlow.js COCO-SSD (MobileNetV2)</strong><br>
+                        Execution environment: <strong>Client-side WebGL / CPU</strong><br>
+                        Inference Time: <span id="inferenceTime" style="font-family: monospace; color: white;">0ms</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Collapsible deployment guide for Tomcat / SQL / Python -->
+        <div class="deployment-section">
+            <div class="toggle-header" onclick="toggleGuide()">
+                <span><i class="bi bi-terminal-fill"></i> Deploy the Enterprise J2EE version (Docker / Render Guide)</span>
+                <i class="bi bi-chevron-down" id="chevronIcon"></i>
+            </div>
+            
+            <div class="toggle-content" id="guideContent">
+                <div class="guide-grid">
+                    <!-- Option A: Render -->
+                    <div class="guide-card">
+                        <div class="guide-title">
+                            <i class="bi bi-cloud-check-fill"></i> Option A: Deploy to Render (Zero-Config SQLite fallback)
                         </div>
-                    </li>
-                    <li class="step-item">
-                        <span class="step-number">3</span>
-                        <div class="step-text">Open a terminal in the cloned directory and run Docker Compose:
-                            <div class="code-block">docker-compose up --build</div>
+                        <ul class="steps">
+                            <li class="step-item">
+                                <span class="step-number">1</span>
+                                <div class="step-text">Create a free account on <strong>Render.com</strong>.</div>
+                            </li>
+                            <li class="step-item">
+                                <span class="step-number">2</span>
+                                <div class="step-text">Create a new <strong>Web Service</strong>, and link your cloned GitHub repository <code>amritanshu2711/AI-Object_Detection</code>.</div>
+                            </li>
+                            <li class="step-item">
+                                <span class="step-number">3</span>
+                                <div class="step-text">Set the runtime environment of the Web Service to <strong>Docker</strong>. Render will read our multi-stage <code>Dockerfile</code>.</div>
+                            </li>
+                            <li class="step-item">
+                                <span class="step-number">4</span>
+                                <div class="step-text">Leave environment settings empty. Since no MySQL variables are present, the app will instantly boot and run on a self-contained <strong>SQLite</strong> database inside the container.</div>
+                            </li>
+                            <li class="step-item">
+                                <span class="step-number">5</span>
+                                <div class="step-text">Render will start your application. Once online, visit the provided Render URL to access the full user signups, detection history, and admin reporting logs!</div>
+                            </li>
+                        </ul>
+                    </div>
+
+                    <!-- Option B: Local Docker -->
+                    <div class="guide-card">
+                        <div class="guide-title">
+                            <i class="bi bi-laptop"></i> Option B: Run locally using Docker Compose (MySQL + Tomcat)
                         </div>
-                    </li>
-                    <li class="step-item">
-                        <span class="step-number">4</span>
-                        <div class="step-text">This will download the AI models, compile the J2EE application, start MySQL, and initialize the database automatically.</div>
-                    </li>
-                    <li class="step-item">
-                        <span class="step-number">5</span>
-                        <div class="step-text">Open your browser and navigate to:
-                            <div class="code-block">http://localhost:8080/ai_object_detection_system</div>
-                        </div>
-                    </li>
-                </ul>
+                        <ul class="steps">
+                            <li class="step-item">
+                                <span class="step-number">1</span>
+                                <div class="step-text">Open a terminal inside your cloned local repository directory.</div>
+                            </li>
+                            <li class="step-item">
+                                <span class="step-number">2</span>
+                                <div class="step-text">Start the combined stack:
+                                    <div class="code-block">docker-compose up --build</div>
+                                </div>
+                            </li>
+                            <li class="step-item">
+                                <span class="step-number">3</span>
+                                <div class="step-text">Docker will launch a MySQL database container (pre-seeded with <code>schema.sql</code>) and compile/run the J2EE application inside Tomcat.</div>
+                            </li>
+                            <li class="step-item">
+                                <span class="step-number">4</span>
+                                <div class="step-text">Open your browser and load the site:
+                                    <div class="code-block">http://localhost:8080/ai_object_detection_system</div>
+                                </div>
+                            </li>
+                            <li class="step-item">
+                                <span class="step-number">5</span>
+                                <div class="step-text">Log in as admin: Username: <code>admin</code>, Password: <code>admin123</code>.</div>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
             </div>
         </div>
     </main>
@@ -426,5 +595,132 @@
     <footer>
         <p>&copy; 2026 AI Powered Object Detection System. Managed by Amritanshu Singh.</p>
     </footer>
+
+    <script>
+        let detector;
+        
+        // Load the cocoSSD model asynchronously
+        cocoSsd.load().then(model => {
+            detector = model;
+            document.getElementById('modelLoading').style.display = 'none';
+            // Run prediction on the initial preset
+            runModel();
+        }).catch(err => {
+            console.error("Failed to load model:", err);
+            document.getElementById('modelLoading').innerHTML = 
+                '<span style="color: #ef4444;"><i class="bi bi-x-circle-fill"></i> Error downloading neural network model. Check console.</span>';
+        });
+
+        function loadPreset(name) {
+            // Remove active classes
+            document.querySelectorAll('.preset-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            // Add active class to sender
+            event.target.classList.add('active');
+
+            const img = document.getElementById('imageElement');
+            img.src = 'src/main/webapp/assets/images/dataset/' + name + '.png';
+        }
+
+        function handleImageUpload(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                const img = document.getElementById('imageElement');
+                img.src = event.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function runModel() {
+            const img = document.getElementById('imageElement');
+            const canvas = document.getElementById('canvasElement');
+            
+            if (!detector || !img.complete) return;
+
+            const start = performance.now();
+            
+            // Execute predictions
+            detector.detect(img).then(predictions => {
+                const inferenceTime = Math.round(performance.now() - start);
+                document.getElementById('inferenceTime').innerText = inferenceTime + 'ms';
+                
+                // Clear and resize canvas
+                canvas.width = img.naturalWidth;
+                canvas.height = img.naturalHeight;
+                const ctx = canvas.getContext('2d');
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+                const resultsList = document.getElementById('resultsList');
+                const resultsPlaceholder = document.getElementById('resultsPlaceholder');
+                
+                resultsList.innerHTML = '';
+                
+                if (predictions.length === 0) {
+                    resultsList.style.display = 'none';
+                    resultsPlaceholder.style.display = 'block';
+                    resultsPlaceholder.innerHTML = '<i class="bi bi-eye-slash-fill" style="font-size: 1.5rem; display: block; margin-bottom: 0.5rem;"></i>No objects detected.';
+                    return;
+                }
+
+                resultsPlaceholder.style.display = 'none';
+                resultsList.style.display = 'flex';
+
+                predictions.forEach(pred => {
+                    // Draw bounding box
+                    ctx.strokeStyle = '#4f46e5';
+                    ctx.lineWidth = Math.max(2, Math.round(canvas.width / 200));
+                    ctx.strokeRect(pred.bbox[0], pred.bbox[1], pred.bbox[2], pred.bbox[3]);
+
+                    // Draw label background
+                    ctx.fillStyle = '#4f46e5';
+                    const fontSize = Math.max(10, Math.round(canvas.width / 40));
+                    ctx.font = 'bold ' + fontSize + 'px sans-serif';
+                    const label = pred.class.charAt(0).toUpperCase() + pred.class.slice(1);
+                    const scoreText = Math.round(pred.score * 100) + '%';
+                    const textWidth = ctx.measureText(label + ' ' + scoreText).width;
+                    
+                    ctx.fillRect(pred.bbox[0], pred.bbox[1] - fontSize - 6, textWidth + 12, fontSize + 8);
+                    
+                    // Draw text labels
+                    ctx.fillStyle = '#ffffff';
+                    ctx.fillText(label + ' ' + scoreText, pred.bbox[0] + 6, pred.bbox[1] - 4);
+
+                    // Add to prediction list UI
+                    const li = document.createElement('li');
+                    li.className = 'result-item';
+                    
+                    const labelSpan = document.createElement('span');
+                    labelSpan.className = 'result-label';
+                    labelSpan.innerHTML = '<i class="bi bi-tag-fill" style="color: #818cf8;"></i> ' + label;
+                    
+                    const scoreSpan = document.createElement('span');
+                    scoreSpan.className = 'result-score';
+                    scoreSpan.innerText = scoreText;
+
+                    li.appendChild(labelSpan);
+                    li.appendChild(scoreSpan);
+                    resultsList.appendChild(li);
+                });
+            }).catch(err => {
+                console.error("Detection error:", err);
+            });
+        }
+
+        function toggleGuide() {
+            const content = document.getElementById('guideContent');
+            const chevron = document.getElementById('chevronIcon');
+            if (content.style.display === 'block') {
+                content.style.display = 'none';
+                chevron.className = 'bi bi-chevron-down';
+            } else {
+                content.style.display = 'block';
+                chevron.className = 'bi bi-chevron-up';
+            }
+        }
+    </script>
 </body>
 </html>
