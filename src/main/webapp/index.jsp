@@ -2,8 +2,8 @@
 <%@ page import="com.detection.model.User" %>
 <%@ page import="com.detection.model.Admin" %>
 <%
-    User indexUser = (session != null) ? (User) session.getAttribute("currentUser") : null;
-    Admin indexAdmin = (session != null) ? (Admin) session.getAttribute("currentAdmin") : null;
+    User indexUser = (session!= null) ? (User) session.getAttribute("currentUser") : null;
+    Admin indexAdmin = (session!= null) ? (Admin) session.getAttribute("currentAdmin") : null;
 %>
 <!DOCTYPE html>
 <html lang="en">
